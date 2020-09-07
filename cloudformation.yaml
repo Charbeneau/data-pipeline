@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+
+Description: Let's build a data pipeline!
+
+
+Parameters:
+
+  S3:
+    Type: String
+
+  Lambda:
+    Type: String
+
+  Dynamo:
+    Type: String
+
+Resources:
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub: ${AWS::StackName}-LogGroup
+      RetentionInDays: 14
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref S3BucketParameter
+      VersioningConfiguration:
+        Status: Enabled
+  #
+  # DynamoDB:
+  #   Type: AWS::CodeBuild::DynamoDB
+  #   Name: !Ref DynamoDB
