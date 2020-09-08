@@ -2,14 +2,18 @@
 
 set -euo pipefail
 
+# This is the tag of the Docker image in which AWS CLI commands are run.
 IMAGE_TAG=data_pipeline
 
 ENVIRONMENT=dev
 
+# Prefix for all AWS resources.
 PREFIX=data-pipeline
 
+# CloudFormation stack name.
 STACK_NAME=${ENVIRONMENT}-${PREFIX}
 
+# These are passed in as CloudFormation parameters and become environment variables or resource names.
 S3_BUCKET=${PREFIX}-s3-bucket
 S3_OBJECT_KEY=DEVOPS_TEST_DATA.csv
 LAMBDA_FUNCTION_NAME=${PREFIX}-lambda-function
@@ -35,7 +39,7 @@ case $COMMAND in
   delete_image)
   echo
   echo "Deleting the $IMAGE_TAG image."
-  docker rmi $(docker images --filter=reference=$IMAGE_TAG --quiet)
+  docker rmi $(docker images --filter=reference=$IMAGE_TAG --quiet) --force
   ;;
 
   build_image)

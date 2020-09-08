@@ -20,13 +20,6 @@ Parameters:
 
 Resources:
 
-  LogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName:
-        Fn::Sub: ${AWS::StackName}-LogGroup
-      RetentionInDays: 14
-
   S3Bucket:
     DependsOn:
       - LambdaFunction
@@ -96,36 +89,29 @@ Resources:
             - import os
             - import csv
             - import codecs
-            - import sys
             - ''
-            - s3 = boto3.resource('s3')
-            - dynamodb = boto3.resource('dynamodb')
             - ''
             - 'S3_BUCKET = os.environ[''S3_BUCKET'']'
             - 'S3_OBJECT_KEY = os.environ[''S3_OBJECT_KEY'']'
             - 'DYNAMODB_TABLE_NAME = os.environ[''DYNAMODB_TABLE_NAME'']'
             - ''
+            - ''
+            - s3 = boto3.resource('s3')
+            - dynamodb = boto3.resource('dynamodb')
+            - ''
+            - ''            
             - 'def lambda_handler(event, context):'
             - ''
             - ''
-            - '   print("S3_BUCKET: {0}".format(S3_BUCKET))'
-            - '   print("S3_OBJECT_KEY: {0}".format(S3_OBJECT_KEY))'
-            - '   print("DYNAMODB_TABLE_NAME: {0}".format(DYNAMODB_TABLE_NAME))'
-            - ''
-            - '   #get() does not store in memory'
             - '   try:'
+            - '       print("Getting s3://{0}/{1}.".format(S3_BUCKET, S3_OBJECT_KEY))'
             - '       obj = s3.Object(S3_BUCKET, S3_OBJECT_KEY).get()[''Body'']'
             - '   except:'
-            - '       print("S3 Object could not be opened. Check environment variable. ")'
-            - '   try:'
-            - '       table = dynamodb.Table(DYNAMODB_TABLE_NAME)'
-            - '   except:'
-            - '       print("Error loading DynamoDB table. Check if table was created correctly and environment variable.")'
+            - '       print("S3 Object could not be opened. Check environment variables.")'
             - ''
             - '   batch_size = 100'
             - '   batch = []'
             - ''
-            - '   #DictReader is a generator; not stored in memory'
             - '   for row in csv.DictReader(codecs.getreader(''utf-8'')(obj)):'
             - '      if len(batch) >= batch_size:'
             - '         write_to_dynamo(batch)'
@@ -143,12 +129,15 @@ Resources:
             - ''
             - ''
             - 'def write_to_dynamo(rows):'
-            - '   try:'
-            - '      table = dynamodb.Table(DYNAMODB_TABLE_NAME)'
-            - '   except:'
-            - '      print("Error loading DynamoDB table. Check if table was created correctly and environment variable.")'
             - ''
             - '   try:'
+            - '      print("Loading {0}.".format(DYNAMODB_TABLE_NAME))'
+            - '      table = dynamodb.Table(DYNAMODB_TABLE_NAME)'
+            - '   except:'
+            - '      print("Error loading DynamoDB table. Confirm that the table was created correctly, and check environment variables.")'
+            - ''
+            - '   try:'
+            - '      print("Writing to {0}.".format(DYNAMODB_TABLE_NAME))'
             - '      with table.batch_writer() as batch:'
             - '         for i in range(len(rows)):'
             - '            batch.put_item('

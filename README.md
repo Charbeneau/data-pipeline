@@ -3,13 +3,15 @@ Let's build a data pipeline!
 
 # Overview
 
-Here we build a data pipeline.
+Here is a simple data pipeline.
 
-Everything has been Dockerized so that it works on your machine, heavy though that may seem.
+It consists of an S3 bucket, a lambda function, and a DynamoDB table.
 
-CloudFormation creates the AWS resources.  See [cloudformation.yaml](./cloudformation.yaml)
+The input into the pipeline is [a csv](./data/DEVOPS_TEST_DATA.csv), which, when uploaded into the S3 bucket, triggers the lambda function, which writes the data into the DynamoDB table.
 
-Use [driver.sh](./driver.sh) to do things.
+CloudFormation creates the AWS resources.  See [cloudformation.yaml](./cloudformation.yaml).
+
+Use [driver.sh](./driver.sh) to do things, all of which happen in Docker, heavy though that may seem, to ensure portability.
 
 # Requirements
 
@@ -24,7 +26,7 @@ Use [driver.sh](./driver.sh) to do things.
 
 # Usage
 
-0. Build the Docker image that plays the role of a build server.
+0. Build the Docker image that plays the role of a build server, so to speak.
 ```
 bash driver.sh build_image
 ```
@@ -53,9 +55,9 @@ upload: data/DEVOPS_TEST_DATA.csv to s3://data-pipeline-s3-bucket/DEVOPS_TEST_DA
 
 
 TO DO:
-https://aws.amazon.com/blogs/database/implementing-bulk-csv-ingestion-to-amazon-dynamodb/
-https://github.com/aws-samples/csv-to-dynamodb/blob/master/CloudFormation/CSVToDynamo.template
-https://medium.com/serverlessguru/how-to-convert-cloudformation-json-to-yaml-1c011331fae2
+https://docs.aws.amazon.com/codebuild/latest/userguide/cloudformation-vpc-template.html
+https://medium.com/@labrlearning/creating-a-custom-vpc-in-aws-using-cloudformation-c350b4fe34d6
 
 https://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies-vpc-endpoint.html
 https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-lambda-function-vpcconfig.html
+https://aws.amazon.com/blogs/database/applying-best-practices-for-securing-sensitive-data-in-amazon-dynamodb/
