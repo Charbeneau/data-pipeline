@@ -24,20 +24,32 @@ Use [driver.sh](./driver.sh) to do things.
 
 # Usage
 
-0. To remove all unused Docker containers, run.
+0. Build the Docker image that plays the role of a build server.
 ```
-bash drivers.sh docker_clean_unused
-```
-
-1. Build the container.
-```
-bash drivers.sh build
+bash driver.sh build_image
 ```
 
-2. Create the CloudFormation stack.
+1. Create the CloudFormation stack.
 ```
 bash drivers.sh create_stack
 ```
+
+Creating the dev-data-pipeline CloudFormation stack.
+
+Waiting for changeset to be created..
+Waiting for stack create/update to complete
+Successfully created/updated stack - dev-data-pipeline
+
+2. Upload the data to S3.
+```
+bash driver.sh upload_data
+```
+
+upload: data/DEVOPS_TEST_DATA.csv to s3://data-pipeline-s3-bucket/DEVOPS_TEST_DATA.csv
+
+3. Go to CloudFormation > Stacks > dev-data-pipeline, click on "Resources", find the data-pipeline-dynamodb-table, and click on it.
+
+4. Click on the Items tab, and you should see the data.
 
 
 TO DO:

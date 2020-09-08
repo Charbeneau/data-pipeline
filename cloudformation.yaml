@@ -6,13 +6,16 @@ Description: Let's build a data pipeline!
 
 Parameters:
 
-  S3:
+  S3BucketName:
     Type: String
 
-  Lambda:
+  S3ObjectKey:
     Type: String
 
-  Dynamo:
+  LambdaFunctionName:
+    Type: String
+
+  DynamoDBTableName:
     Type: String
 
 Resources:
@@ -25,12 +28,154 @@ Resources:
       RetentionInDays: 14
 
   S3Bucket:
-    Type: AWS::S3::Bucket
+    DependsOn:
+      - LambdaFunction
+      - S3BucketPermission
+    Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Ref S3BucketParameter
-      VersioningConfiguration:
-        Status: Enabled
-  #
-  # DynamoDB:
-  #   Type: AWS::CodeBuild::DynamoDB
-  #   Name: !Ref DynamoDB
+      BucketName: !Ref S3BucketName
+      AccessControl: BucketOwnerFullControl
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: 's3:ObjectCreated:*'
+            Function: !GetAtt
+              - LambdaFunction
+              - Arn
+
+  S3BucketPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref LambdaFunction
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+
+  LambdaFunctionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - s3.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - 'arn:aws:iam::aws:policy/AWSLambdaInvocation-DynamoDB'
+        - 'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'
+      Policies:
+        - PolicyName: policyname
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Resource: '*'
+                Action:
+                  - 'dynamodb:PutItem'
+                  - 'dynamodb:BatchWriteItem'
+
+  LambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: !Ref LambdaFunctionName
+      Handler: index.lambda_handler
+      Role: !GetAtt
+        - LambdaFunctionRole
+        - Arn
+      Code:
+        ZipFile: !Join
+          - |+
+
+          - - import json
+            - import boto3
+            - import os
+            - import csv
+            - import codecs
+            - import sys
+            - ''
+            - s3 = boto3.resource('s3')
+            - dynamodb = boto3.resource('dynamodb')
+            - ''
+            - 'S3_BUCKET = os.environ[''S3_BUCKET'']'
+            - 'S3_OBJECT_KEY = os.environ[''S3_OBJECT_KEY'']'
+            - 'DYNAMODB_TABLE_NAME = os.environ[''DYNAMODB_TABLE_NAME'']'
+            - ''
+            - 'def lambda_handler(event, context):'
+            - ''
+            - ''
+            - '   print("S3_BUCKET: {0}".format(S3_BUCKET))'
+            - '   print("S3_OBJECT_KEY: {0}".format(S3_OBJECT_KEY))'
+            - '   print("DYNAMODB_TABLE_NAME: {0}".format(DYNAMODB_TABLE_NAME))'
+            - ''
+            - '   #get() does not store in memory'
+            - '   try:'
+            - '       obj = s3.Object(S3_BUCKET, S3_OBJECT_KEY).get()[''Body'']'
+            - '   except:'
+            - '       print("S3 Object could not be opened. Check environment variable. ")'
+            - '   try:'
+            - '       table = dynamodb.Table(DYNAMODB_TABLE_NAME)'
+            - '   except:'
+            - '       print("Error loading DynamoDB table. Check if table was created correctly and environment variable.")'
+            - ''
+            - '   batch_size = 100'
+            - '   batch = []'
+            - ''
+            - '   #DictReader is a generator; not stored in memory'
+            - '   for row in csv.DictReader(codecs.getreader(''utf-8'')(obj)):'
+            - '      if len(batch) >= batch_size:'
+            - '         write_to_dynamo(batch)'
+            - '         batch.clear()'
+            - ''
+            - '      batch.append(row)'
+            - ''
+            - '   if batch:'
+            - '      write_to_dynamo(batch)'
+            - ''
+            - '   return {'
+            - '      ''statusCode'': 200,'
+            - '      ''body'': json.dumps(''Uploaded to DynamoDB Table'')'
+            - '   }'
+            - ''
+            - ''
+            - 'def write_to_dynamo(rows):'
+            - '   try:'
+            - '      table = dynamodb.Table(DYNAMODB_TABLE_NAME)'
+            - '   except:'
+            - '      print("Error loading DynamoDB table. Check if table was created correctly and environment variable.")'
+            - ''
+            - '   try:'
+            - '      with table.batch_writer() as batch:'
+            - '         for i in range(len(rows)):'
+            - '            batch.put_item('
+            - '               Item=rows[i]'
+            - '            )'
+            - '   except:'
+            - '      print("Error executing batch_writer")'
+      Runtime: python3.7
+      Timeout: 900
+      MemorySize: 3008
+      Environment:
+        Variables:
+          S3_BUCKET: !Ref S3BucketName
+          S3_OBJECT_KEY: !Ref S3ObjectKey
+          DYNAMODB_TABLE_NAME: !Ref DynamoDBTableName
+
+  DynamoDBTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: !Ref DynamoDBTableName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: Employee_SSN
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Employee_SSN
+          KeyType: HASH
+      Tags:
+        - Key: Name
+          Value: !Ref DynamoDBTableName

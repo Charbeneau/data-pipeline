@@ -2,37 +2,43 @@
 
 set -euo pipefail
 
-IMAGE_TAG=devops_image
+IMAGE_TAG=data_pipeline
+
 ENVIRONMENT=dev
-STACK_NAME=${ENVIRONMENT}-devops-data-pipeline
-S3_BUCKET=devops-data-pipeline-bucket
-DATA=./data/DEVOPS_TEST_DATA.csv
-DYNAMO_DB=test-db
+
+PREFIX=data-pipeline
+
+STACK_NAME=${ENVIRONMENT}-${PREFIX}
+
+S3_BUCKET=${PREFIX}-s3-bucket
+S3_OBJECT_KEY=DEVOPS_TEST_DATA.csv
+LAMBDA_FUNCTION_NAME=${PREFIX}-lambda-function
+DYNAMODB_TABLE_NAME=${PREFIX}-dynamodb-table
 
 
 COMMAND=${1:-}
-if [[ $COMMAND != "docker_clean_unused" ]] && \
-   [[ $COMMAND != "build" ]] && \
+if [[ $COMMAND != "delete_image" ]] && \
+   [[ $COMMAND != "build_image" ]] && \
    [[ $COMMAND != "create_stack" ]] && \
    [[ $COMMAND != "upload_data" ]] && \
    [[ $COMMAND != "jupyter" ]] && \
-   [[ $COMMAND != "stop" ]] && \
-   [[ $COMMAND != "shell" ]]; then
+   [[ $COMMAND != "stop_container" ]] && \
+   [[ $COMMAND != "container_shell" ]]; then
   echo
-  echo "COMMAND must be one of docker_clean_unused, build, create_stack, upload_data, jupyter, stop, shell!"
+  echo "COMMAND must be one of delete_image, build_image, create_stack, upload_data, jupyter, stop_container, container_shell!"
   echo "Exiting."
   exit 1
 fi
 
 case $COMMAND in
 
-  docker_clean_unused)
+  delete_image)
   echo
-  echo "Removing all unused Docker images."
-  docker system prune --all --force --volumes
+  echo "Deleting the $IMAGE_TAG image."
+  docker rmi $(docker images --filter=reference=$IMAGE_TAG --quiet)
   ;;
 
-  build)
+  build_image)
   echo
   echo "Building $IMAGE_TAG image."
   docker build --tag $IMAGE_TAG .
@@ -48,16 +54,16 @@ case $COMMAND in
   --stack-name $STACK_NAME \
   --capabilities CAPABILITY_NAMED_IAM \
   --region $AWS_DEFAULT_REGION  \
-  --parameter-overrides S3=$S3_BUCKET Dynamo=$DYNAMO_DB
+  --parameter-overrides S3BucketName=$S3_BUCKET S3ObjectKey=$S3_OBJECT_KEY \
+  LambdaFunctionName=$LAMBDA_FUNCTION_NAME DynamoDBTableName=$DYNAMODB_TABLE_NAME
   ;;
 
   upload_data)
   echo
-  echo "Uploading $DATA to s3://$S3_BUCKET."
   docker run --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
   --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
   --env AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
-  $IMAGE_TAG aws s3 cp $DATA s3://$S3_BUCKET
+  $IMAGE_TAG aws s3 cp ./data/$S3_OBJECT_KEY s3://$S3_BUCKET
   ;;
 
   jupyter)
@@ -66,13 +72,13 @@ case $COMMAND in
   docker run --publish 8888:8888 --volume $(pwd)/notebooks:/workspace/notebooks --detach $IMAGE_TAG jupyter
   ;;
 
-  stop)
+  stop_container)
   echo
   echo "Stopping $IMAGE_TAG container."
   docker container stop $(docker ps -q --filter ancestor=$IMAGE_TAG)
   ;;
 
-  shell)
+  container_shell)
   echo
   echo "Opening a shell in $IMAGE_TAG container."
   docker run --interactive --tty $IMAGE_TAG /bin/sh
