@@ -3,12 +3,10 @@ FROM python:3.7.7-slim-buster
 RUN apt-get update && apt-get -y install \
     gcc
 
-RUN echo 'Installing Python packages.'
 ADD requirements.txt /
 RUN pip install -r /requirements.txt
 
 ADD data/ /workspace/data
-ADD scripts/ /workspace/scripts
 ADD notebooks/ /workspace/notebooks
 ADD cloudformation.yaml /workspace/cloudformation.yaml
 ADD docker-entrypoint.sh /workspace/docker-entrypoint.sh

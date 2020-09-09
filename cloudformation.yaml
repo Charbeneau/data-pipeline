@@ -9,12 +9,10 @@ Parameters:
   VPCCIDR:
     Description: Please enter the IP range (CIDR notation) for this VPC
     Type: String
-    Default: 10.192.0.0/16
 
   PrivateSubnetCIDR:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
     Type: String
-    Default: 10.192.20.0/24
 
   S3BucketName:
     Description: S3 bucket name.
@@ -30,6 +28,10 @@ Parameters:
 
   DynamoDBTableName:
     Description: DynamoDB table containing the data.
+    Type: String
+
+  DynamoDBTableARN:
+    Description: ARN of DynamoDB table.
     Type: String
 
 Resources:
@@ -75,7 +77,7 @@ Resources:
             - dynamodb:Query
             - dynamodb:UpdateItem
           Resource:
-            - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/data-pipeline-dynamodb-table'
+            - !Ref DynamoDBTableARN
       RouteTableIds:
         - !Ref PrivateRouteTable
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.dynamodb'
@@ -166,7 +168,7 @@ Resources:
             - ''
             - ''
             - '   try:'
-            - '       print("Getting s3://{0}/{1}.".format(S3_BUCKET, S3_OBJECT_KEY))'
+            - '       print("Getting data from s3://{0}/{1}.".format(S3_BUCKET, S3_OBJECT_KEY))'
             - '       obj = s3.Object(S3_BUCKET, S3_OBJECT_KEY).get()[''Body'']'
             - '   except:'
             - '       print("S3 Object could not be opened. Check environment variables.")'
@@ -186,7 +188,7 @@ Resources:
             - ''
             - '   return {'
             - '      ''statusCode'': 200,'
-            - '      ''body'': json.dumps(''Uploaded to DynamoDB Table'')'
+            - '      ''body'': json.dumps(''Uploaded to DynamoDB Table.'')'
             - '   }'
             - ''
             - ''
@@ -199,14 +201,14 @@ Resources:
             - '      print("Error loading DynamoDB table. Confirm that the table was created correctly, and check environment variables.")'
             - ''
             - '   try:'
-            - '      print("Writing to {0}.".format(DYNAMODB_TABLE_NAME))'
+            - '      print("Writing data to {0}.".format(DYNAMODB_TABLE_NAME))'
             - '      with table.batch_writer() as batch:'
             - '         for i in range(len(rows)):'
             - '            batch.put_item('
             - '               Item=rows[i]'
             - '            )'
             - '   except:'
-            - '      print("Error executing batch_writer")'
+            - '      print("Error executing batch_writer.")'
       Runtime: python3.7
       Timeout: 900
       MemorySize: 3008
