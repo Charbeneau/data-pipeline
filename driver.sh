@@ -78,6 +78,7 @@ case $COMMAND in
   echo
   echo "Starting Jupyter server in $IMAGE_TAG container."
   docker run --publish 8888:8888 --volume $(pwd)/notebooks:/workspace/notebooks --detach $IMAGE_TAG jupyter
+  echo "Go to http://localhost:8888/."
   ;;
 
   stop_container)

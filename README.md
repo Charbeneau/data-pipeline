@@ -34,7 +34,7 @@ bash driver.sh build_image
 
 1. Create the CloudFormation stack.
 ```
-bash drivers.sh create_stack
+bash driver.sh create_stack
 ```
 
 Creating the dev-data-pipeline CloudFormation stack.
@@ -52,4 +52,4 @@ upload: data/DEVOPS_TEST_DATA.csv to s3://data-pipeline-s3-bucket/DEVOPS_TEST_DA
 
 3. Go to CloudFormation > Stacks > dev-data-pipeline, click on "Resources", find the data-pipeline-dynamodb-table, and click on it.
 
-4. Click on the Items tab, and you should see the data.
+4. Click on the "Items" tab, and you should see the data.
