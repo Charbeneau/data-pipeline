@@ -14,6 +14,10 @@ Parameters:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
     Type: String
 
+  IPADDRESS:
+    Description: IP address from which the AWS resources will be created
+    Type: String
+
   S3BucketName:
     Description: S3 bucket name.
     Type: String
@@ -28,10 +32,6 @@ Parameters:
 
   DynamoDBTableName:
     Description: DynamoDB table containing the data.
-    Type: String
-
-  DynamoDBTableARN:
-    Description: ARN of DynamoDB table.
     Type: String
 
 Resources:
@@ -79,12 +79,30 @@ Resources:
             - dynamodb:Query
             - dynamodb:UpdateItem
           Resource:
-            - !Ref DynamoDBTableARN
+            - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTableName}'
       RouteTableIds:
         - !Ref PrivateRouteTable
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.dynamodb'
       VpcEndpointType: Gateway
       VpcId: !Ref VPC
+
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3BucketName
+      PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action:
+              - s3:*
+            Resource:
+              - !Sub 'arn:aws:s3:::${S3BucketName}/*'
+            Condition:
+              IpAddress:
+                aws:SourceIp:
+                  - !Ref IPADDRESS
 
   S3Bucket:
     DependsOn:

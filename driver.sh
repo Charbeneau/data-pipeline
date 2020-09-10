@@ -20,7 +20,6 @@ S3_BUCKET=${PREFIX}-s3-bucket
 S3_OBJECT_KEY=DEVOPS_TEST_DATA.csv
 LAMBDA_FUNCTION_NAME=${PREFIX}-lambda-function
 DYNAMODB_TABLE_NAME=${PREFIX}-dynamodb-table
-DYNAMODB_TABLE_ARN=arn:aws:dynamodb:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:table/${DYNAMODB_TABLE_NAME}
 
 
 COMMAND=${1:-}
@@ -61,10 +60,10 @@ case $COMMAND in
   --stack-name $STACK_NAME \
   --capabilities CAPABILITY_NAMED_IAM \
   --region $AWS_DEFAULT_REGION  \
-  --parameter-overrides  VPCCIDR=$VPC_CIDR PrivateSubnetCIDR=$PRIVATE_SUBNET_CIDR \
-  S3BucketName=$S3_BUCKET S3ObjectKey=$S3_OBJECT_KEY \
-  LambdaFunctionName=$LAMBDA_FUNCTION_NAME DynamoDBTableName=$DYNAMODB_TABLE_NAME \
-  DynamoDBTableARN=$DYNAMODB_TABLE_ARN
+  --parameter-overrides  IPADDRESS=${IP_ADDRESS} VPCCIDR=$VPC_CIDR \
+  PrivateSubnetCIDR=$PRIVATE_SUBNET_CIDR S3BucketName=$S3_BUCKET \
+  S3ObjectKey=$S3_OBJECT_KEY LambdaFunctionName=$LAMBDA_FUNCTION_NAME \
+  DynamoDBTableName=$DYNAMODB_TABLE_NAME
   ;;
 
   upload_data)

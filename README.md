@@ -23,6 +23,7 @@ Use [driver.sh](./driver.sh) to do things, all of which happen in Docker, heavy 
   - AWS_ACCESS_KEY_ID
   - AWS_SECRET_ACCESS_KEY
   - AWS_DEFAULT_REGION
+  - IP_ADDRESS:  The IP address from which the AWS resources will be created.
 
 # Usage
 
@@ -52,12 +53,3 @@ upload: data/DEVOPS_TEST_DATA.csv to s3://data-pipeline-s3-bucket/DEVOPS_TEST_DA
 3. Go to CloudFormation > Stacks > dev-data-pipeline, click on "Resources", find the data-pipeline-dynamodb-table, and click on it.
 
 4. Click on the Items tab, and you should see the data.
-
-
-TO DO:
-https://docs.aws.amazon.com/codebuild/latest/userguide/cloudformation-vpc-template.html
-https://medium.com/@labrlearning/creating-a-custom-vpc-in-aws-using-cloudformation-c350b4fe34d6
-
-https://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies-vpc-endpoint.html
-https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-lambda-function-vpcconfig.html
-https://aws.amazon.com/blogs/database/applying-best-practices-for-securing-sensitive-data-in-amazon-dynamodb/
